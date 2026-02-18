@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rentguard-frontend
+  labels:
+    app: rentguard-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rentguard-frontend
+  template:
+    metadata:
+      labels:
+        app: rentguard-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: rentguard/frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.rentguard.bd/api/v1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rentguard-frontend-service
+spec:
+  selector:
+    app: rentguard-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: LoadBalancer

@@ -1,0 +1,665 @@
+// RentGuard Database Schema
+// Production-ready schema with encryption support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  phone         String   @unique
+  passwordHash  String   @db.VarChar(255)
+  role          UserRole @default(TENANT)
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
+  isKycVerified  Boolean @default(false)
+  isActive       Boolean @default(true)
+  isSuspended    Boolean @default(false)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenantProfile  TenantProfile?
+  landlordProfile LandlordProfile?
+  sessions       Session[]
+  auditLogs      AuditLog[]
+  twoFactorAuth  TwoFactorAuth?
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  TENANT
+  LANDLORD
+  ADMIN
+  MODERATOR
+  SUPER_ADMIN
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  deviceId     String?
+  deviceInfo   String?  @db.Text
+  ipAddress    String?
+  userAgent    String?  @db.Text
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([accessToken])
+  @@map("sessions")
+}
+
+model TwoFactorAuth {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  secret      String   @db.VarChar(255)
+  isEnabled   Boolean  @default(false)
+  backupCodes String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_auth")
+}
+
+// ============================================
+// IDENTITY VERIFICATION (NID + BIOMETRIC)
+// ============================================
+
+model IdentityVerification {
+  id                String   @id @default(uuid())
+  userId            String
+  nidNumber         String   @db.VarChar(20)
+  nidEncrypted      String   @db.Text // AES-256 encrypted
+  nidFrontImage     String   @db.Text // S3 URL
+  nidBackImage      String   @db.Text // S3 URL
+  nidOcrData        Json?    // Extracted OCR data
+  nidOcrConfidence  Float?
+  selfieImage       String   @db.Text // S3 URL
+  biometricTemplate String?  @db.Text // Encrypted face template
+  faceMatchScore    Float?
+  livenessScore     Float?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedBy        String?  // Admin user ID
+  verifiedAt        DateTime?
+  rejectionReason   String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([nidNumber])
+  @@index([userId])
+  @@index([verificationStatus])
+  @@map("identity_verifications")
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+// ============================================
+// TENANT PROFILE & CREDIT SCORE
+// ============================================
+
+model TenantProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  fullName              String
+  dateOfBirth           DateTime?
+  address               String?   @db.Text
+  emergencyContact      String?
+  emergencyContactPhone String?
+  profileImage          String?   @db.Text
+  bio                   String?   @db.Text
+  preferredLocations    String[]  @default([])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditScore           CreditScore?
+  leases                Lease[]
+  reviews               Review[]
+  disputes              Dispute[]
+  payments              Payment[]
+  fraudSignals          FraudSignal[]
+
+  @@map("tenant_profiles")
+}
+
+model CreditScore {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  score                 Int      @default(500) // 0-1000
+  riskCategory          RiskCategory @default(MODERATE)
+  fraudProbability      Float    @default(0.0) // 0.0-1.0
+  reliabilityIndex      Float    @default(0.5) // 0.0-1.0
+  
+  // Score Components
+  paymentPunctuality    Float    @default(0.5)
+  leaseCompletionRatio  Float    @default(0.5)
+  disputeHistoryScore   Float    @default(0.5)
+  propertyDamageScore   Float    @default(0.5)
+  behavioralScore       Float    @default(0.5)
+  identityConfidence    Float    @default(0.5)
+  tenureStability       Float    @default(0.5)
+  communityEndorsements Float    @default(0.0)
+  
+  // Metadata
+  lastCalculatedAt      DateTime @default(now())
+  calculationVersion    String   @default("1.0")
+  explanation           Json?    // Explainable AI output
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tenant TenantProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  history CreditScoreHistory[]
+
+  @@index([score])
+  @@index([riskCategory])
+  @@map("credit_scores")
+}
+
+enum RiskCategory {
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+model CreditScoreHistory {
+  id          String   @id @default(uuid())
+  creditScoreId String
+  score       Int
+  riskCategory RiskCategory
+  reason      String?  @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  creditScore CreditScore @relation(fields: [creditScoreId], references: [id], onDelete: Cascade)
+
+  @@index([creditScoreId])
+  @@index([createdAt])
+  @@map("credit_score_history")
+}
+
+// ============================================
+// LANDLORD PROFILE
+// ============================================
+
+model LandlordProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  fullName        String
+  companyName     String?
+  licenseNumber   String?
+  address         String?   @db.Text
+  taxId           String?
+  profileImage    String?   @db.Text
+  bio             String?   @db.Text
+  verificationStatus VerificationStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties      Property[]
+  reviews         Review[]
+
+  @@map("landlord_profiles")
+}
+
+// ============================================
+// PROPERTY MANAGEMENT
+// ============================================
+
+model Property {
+  id                String   @id @default(uuid())
+  landlordId        String
+  title             String
+  description       String   @db.Text
+  propertyType      PropertyType
+  address           String   @db.Text
+  city              String
+  district          String
+  area              String?
+  coordinates       Json?    // {lat, lng}
+  bedrooms          Int
+  bathrooms         Int
+  squareFeet        Float?
+  rentAmount        Decimal  @db.Decimal(10, 2)
+  depositAmount     Decimal  @db.Decimal(10, 2)
+  availableFrom     DateTime
+  availableTo       DateTime?
+  isAvailable       Boolean  @default(true)
+  images            String[] @default([]) // S3 URLs
+  amenities         String[] @default([])
+  rules             String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  landlord          LandlordProfile @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  leases            Lease[]
+  applications      Application[]
+
+  @@index([landlordId])
+  @@index([city])
+  @@index([isAvailable])
+  @@index([rentAmount])
+  @@map("properties")
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  FLAT
+  STUDIO
+  CONDOMINIUM
+  COMMERCIAL
+  OTHER
+}
+
+model Application {
+  id            String   @id @default(uuid())
+  propertyId   String
+  tenantId     String
+  status       ApplicationStatus @default(PENDING)
+  message      String?   @db.Text
+  appliedAt    DateTime  @default(now())
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant       TenantProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+// ============================================
+// DIGITAL LEASE ENGINE
+// ============================================
+
+model Lease {
+  id                String   @id @default(uuid())
+  propertyId        String
+  tenantId          String
+  landlordId        String
+  leaseNumber       String   @unique
+  startDate         DateTime
+  endDate           DateTime
+  monthlyRent       Decimal  @db.Decimal(10, 2)
+  depositAmount     Decimal  @db.Decimal(10, 2)
+  status            LeaseStatus @default(ACTIVE)
+  
+  // Digital Contract
+  contractPdfUrl    String?   @db.Text
+  tenantSignature   String?   @db.Text // Encrypted signature data
+  landlordSignature String?   @db.Text
+  signedAt          DateTime?
+  
+  // Terms & Conditions
+  terms             Json?     // Structured lease terms
+  autoRenewal       Boolean   @default(false)
+  lateFeePercentage Float     @default(0.05)
+  noticePeriodDays  Int       @default(30)
+  
+  // Breach Detection
+  breachCount       Int       @default(0)
+  lastBreachAt      DateTime?
+  terminationReason String?   @db.Text
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  terminatedAt      DateTime?
+
+  property          Property @relation(fields: [propertyId], references: [id])
+  tenant            TenantProfile @relation(fields: [tenantId], references: [id])
+  payments          Payment[]
+  disputes          Dispute[]
+  leaseEvents       LeaseEvent[]
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([landlordId])
+  @@index([status])
+  @@map("leases")
+}
+
+enum LeaseStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  BREACHED
+}
+
+model LeaseEvent {
+  id          String   @id @default(uuid())
+  leaseId     String
+  eventType   LeaseEventType
+  description String   @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  lease       Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@index([leaseId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("lease_events")
+}
+
+enum LeaseEventType {
+  CREATED
+  SIGNED
+  PAYMENT_RECEIVED
+  PAYMENT_OVERDUE
+  BREACH_DETECTED
+  TERMINATED
+  RENEWED
+  DISPUTE_OPENED
+}
+
+// ============================================
+// PAYMENTS
+// ============================================
+
+model Payment {
+  id              String   @id @default(uuid())
+  leaseId         String
+  tenantId        String
+  amount          Decimal  @db.Decimal(10, 2)
+  paymentType     PaymentType
+  paymentMethod   PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?  @unique
+  gatewayResponse Json?
+  dueDate         DateTime
+  paidAt          DateTime?
+  lateFee         Decimal? @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lease           Lease @relation(fields: [leaseId], references: [id])
+  tenant          TenantProfile @relation(fields: [tenantId], references: [id])
+
+  @@index([leaseId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("payments")
+}
+
+enum PaymentType {
+  RENT
+  DEPOSIT
+  LATE_FEE
+  DAMAGE_FEE
+  OTHER
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  BANK_TRANSFER
+  CASH
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// ============================================
+// DISPUTE RESOLUTION
+// ============================================
+
+model Dispute {
+  id              String   @id @default(uuid())
+  leaseId         String
+  tenantId        String
+  landlordId      String
+  type            DisputeType
+  title           String
+  description     String   @db.Text
+  status          DisputeStatus @default(OPEN)
+  priority        DisputePriority @default(MEDIUM)
+  assignedModerator String?
+  resolution      String?  @db.Text
+  resolvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lease           Lease @relation(fields: [leaseId], references: [id])
+  tenant          TenantProfile @relation(fields: [tenantId], references: [id])
+  evidence        DisputeEvidence[]
+  messages        DisputeMessage[]
+
+  @@index([leaseId])
+  @@index([status])
+  @@index([priority])
+  @@map("disputes")
+}
+
+enum DisputeType {
+  PAYMENT
+  PROPERTY_DAMAGE
+  LEASE_VIOLATION
+  HARASSMENT
+  MAINTENANCE
+  OTHER
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+  ESCALATED
+}
+
+enum DisputePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model DisputeEvidence {
+  id          String   @id @default(uuid())
+  disputeId   String
+  uploadedBy  String   // User ID
+  fileUrl     String   @db.Text
+  fileType    String
+  description String?  @db.Text
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  dispute     Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+  @@map("dispute_evidence")
+}
+
+model DisputeMessage {
+  id          String   @id @default(uuid())
+  disputeId   String
+  senderId    String
+  message     String   @db.Text
+  isInternal  Boolean  @default(false) // Moderator-only
+  createdAt   DateTime @default(now())
+
+  dispute     Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId])
+  @@index([createdAt])
+  @@map("dispute_messages")
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+model Review {
+  id          String   @id @default(uuid())
+  leaseId     String?
+  tenantId    String
+  landlordId String?
+  propertyId  String?
+  rating      Int      // 1-5
+  comment     String?  @db.Text
+  isVerified  Boolean  @default(false)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      TenantProfile @relation(fields: [tenantId], references: [id])
+  landlord    LandlordProfile? @relation(fields: [landlordId], references: [id])
+
+  @@index([tenantId])
+  @@index([landlordId])
+  @@index([propertyId])
+  @@map("reviews")
+}
+
+// ============================================
+// FRAUD DETECTION
+// ============================================
+
+model FraudSignal {
+  id              String   @id @default(uuid())
+  tenantId        String?
+  userId          String?
+  signalType      FraudSignalType
+  severity        FraudSeverity
+  description     String   @db.Text
+  metadata        Json?
+  isResolved      Boolean  @default(false)
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  tenant          TenantProfile? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([signalType])
+  @@index([severity])
+  @@index([isResolved])
+  @@map("fraud_signals")
+}
+
+enum FraudSignalType {
+  MULTIPLE_ACCOUNTS
+  FAKE_NID
+  SUSPICIOUS_BEHAVIOR
+  RENTAL_HOPPING
+  IP_ANOMALY
+  DEVICE_ANOMALY
+  PAYMENT_FRAUD
+  IDENTITY_THEFT
+  OTHER
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// AUDIT & COMPLIANCE
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  changes     Json?
+  ipAddress   String?
+  userAgent   String?  @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user        User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String   @db.Text
+  isRead      Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LEASE_CREATED
+  PAYMENT_DUE
+  PAYMENT_RECEIVED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  REVIEW_REQUEST
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  SYSTEM_ALERT
+}
