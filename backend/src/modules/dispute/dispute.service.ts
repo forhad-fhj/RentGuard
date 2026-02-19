@@ -47,12 +47,13 @@ export class DisputeService {
     return dispute;
   }
 
-  async addEvidence(disputeId: string, fileUrl: string, uploadedBy: string, description?: string) {
+  async addEvidence(disputeId: string, fileUrl: string, uploadedBy: string, fileType: string, description?: string) {
     return this.prisma.disputeEvidence.create({
       data: {
         disputeId,
         fileUrl,
         uploadedBy,
+        fileType,
         description,
       },
     });

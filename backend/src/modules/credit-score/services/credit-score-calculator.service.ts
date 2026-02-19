@@ -127,7 +127,7 @@ export class CreditScoreCalculator {
     if (payments.length === 0) return 0.5; // Default neutral score
 
     const onTimePayments = payments.filter(
-      (p) => p.status === 'COMPLETED' && p.paidAt && p.paidAt <= p.dueDate,
+      (p: any) => p.status === 'COMPLETED' && p.paidAt && p.paidAt <= p.dueDate,
     ).length;
 
     return onTimePayments / payments.length;
@@ -141,7 +141,7 @@ export class CreditScoreCalculator {
     if (leases.length === 0) return 0.5;
 
     const completedLeases = leases.filter(
-      (l) => l.status === 'EXPIRED' && !l.terminatedAt,
+      (l: any) => l.status === 'EXPIRED' && !l.terminatedAt,
     ).length;
 
     return completedLeases / leases.length;
@@ -155,7 +155,7 @@ export class CreditScoreCalculator {
     if (disputes.length === 0) return 0.0; // No disputes = good
 
     const resolvedDisputes = disputes.filter(
-      (d) => d.status === 'RESOLVED' || d.status === 'CLOSED',
+      (d: any) => d.status === 'RESOLVED' || d.status === 'CLOSED',
     ).length;
 
     // Lower score = more disputes
@@ -223,12 +223,12 @@ export class CreditScoreCalculator {
     if (leases.length === 0) return 0.5;
 
     // Calculate average lease duration
-    const durations = leases.map((lease) => {
+    const durations = leases.map((lease: any) => {
       const end = lease.endDate || new Date();
       return (end.getTime() - lease.startDate.getTime()) / (1000 * 60 * 60 * 24 * 30); // Months
     });
 
-    const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
+    const avgDuration = durations.reduce((a: number, b: number) => a + b, 0) / durations.length;
 
     // Normalize to 0-1 (12+ months = 1.0)
     return Math.min(1.0, avgDuration / 12);
@@ -241,7 +241,7 @@ export class CreditScoreCalculator {
 
     if (reviews.length === 0) return 0.0;
 
-    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    const avgRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
 
     // Normalize 1-5 rating to 0-1
     return (avgRating - 1) / 4;
@@ -263,7 +263,7 @@ export class CreditScoreCalculator {
     };
 
     const totalWeight = fraudSignals.reduce(
-      (sum, signal) => sum + (severityWeights[signal.severity] || 0),
+      (sum: number, signal: any) => sum + (severityWeights[signal.severity as keyof typeof severityWeights] || 0),
       0,
     );
 

@@ -9,15 +9,26 @@ export class S3Service {
   private bucket: string;
 
   constructor(private configService: ConfigService) {
-    this.s3Client = new S3Client({
-      region: this.configService.get<string>('aws.region'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('aws.accessKeyId'),
-        secretAccessKey: this.configService.get<string>('aws.secretAccessKey'),
-      },
-      endpoint: this.configService.get<string>('aws.s3Endpoint'),
-    });
-    this.bucket = this.configService.get<string>('aws.s3Bucket');
+    const region = this.configService.get<string>('aws.region') || 'ap-southeast-1';
+    const accessKeyId = this.configService.get<string>('aws.accessKeyId');
+    const secretAccessKey = this.configService.get<string>('aws.secretAccessKey');
+    const endpoint = this.configService.get<string>('aws.s3Endpoint');
+    
+    const config: any = { region };
+    
+    if (accessKeyId && secretAccessKey) {
+      config.credentials = {
+        accessKeyId,
+        secretAccessKey,
+      };
+    }
+    
+    if (endpoint) {
+      config.endpoint = endpoint;
+    }
+    
+    this.s3Client = new S3Client(config);
+    this.bucket = this.configService.get<string>('aws.s3Bucket') || 'rentguard-documents';
   }
 
   async uploadFile(

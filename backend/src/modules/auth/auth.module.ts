@@ -11,6 +11,7 @@ import { EncryptionUtil } from '../../common/utils/encryption.util';
 
 @Module({
   imports: [
+    ConfigModule,
     PrismaModule,
     PassportModule,
     JwtModule.registerAsync({

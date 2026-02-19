@@ -35,6 +35,7 @@ model User {
   sessions       Session[]
   auditLogs      AuditLog[]
   twoFactorAuth  TwoFactorAuth?
+  identityVerification IdentityVerification?
 
   @@index([email])
   @@index([phone])
@@ -89,7 +90,7 @@ model TwoFactorAuth {
 
 model IdentityVerification {
   id                String   @id @default(uuid())
-  userId            String
+  userId            String   @unique
   nidNumber         String   @db.VarChar(20)
   nidEncrypted      String   @db.Text // AES-256 encrypted
   nidFrontImage     String   @db.Text // S3 URL
@@ -149,6 +150,7 @@ model TenantProfile {
   disputes              Dispute[]
   payments              Payment[]
   fraudSignals          FraudSignal[]
+  applications         Application[]
 
   @@map("tenant_profiles")
 }

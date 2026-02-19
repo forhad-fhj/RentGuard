@@ -1,14 +1,19 @@
 import * as crypto from 'crypto';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+@Injectable()
 export class EncryptionUtil {
   private readonly algorithm = 'aes-256-gcm';
   private readonly key: Buffer;
 
   constructor(private configService: ConfigService) {
+    if (!this.configService) {
+      throw new Error('ConfigService is not available');
+    }
     const encryptionKey = this.configService.get<string>('encryption.key');
     if (!encryptionKey || encryptionKey.length < 32) {
-      throw new Error('ENCRYPTION_KEY must be at least 32 characters');
+      throw new Error('ENCRYPTION_KEY must be at least 32 characters. Check your .env file.');
     }
     this.key = crypto.scryptSync(encryptionKey, 'salt', 32);
   }

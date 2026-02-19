@@ -1,5 +1,5 @@
 export default () => ({
-  port: parseInt(process.env.PORT, 10) || 3001,
+  port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPrefix: process.env.API_PREFIX || 'api/v1',
   
@@ -9,7 +9,7 @@ export default () => ({
   
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
-    ttl: parseInt(process.env.REDIS_TTL, 10) || 3600,
+    ttl: parseInt(process.env.REDIS_TTL || '3600', 10),
   },
   
   jwt: {
@@ -40,7 +40,7 @@ export default () => ({
   
   smtp: {
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from: process.env.SMTP_FROM || 'noreply@rentguard.bd',
@@ -66,8 +66,8 @@ export default () => ({
   },
   
   security: {
-    rateLimitTtl: parseInt(process.env.RATE_LIMIT_TTL, 10) || 60,
-    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+    rateLimitTtl: parseInt(process.env.RATE_LIMIT_TTL || '60', 10),
+    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   },
   
@@ -79,17 +79,17 @@ export default () => ({
   ai: {
     tesseractDataPath: process.env.TESSERACT_DATA_PATH || './tesseract-data',
     faceRecognitionModelPath: process.env.FACE_RECOGNITION_MODEL_PATH || './models',
-    faceMatchThreshold: parseFloat(process.env.FACE_MATCH_THRESHOLD) || 0.6,
+    faceMatchThreshold: parseFloat(process.env.FACE_MATCH_THRESHOLD || '0.6'),
   },
   
   creditScore: {
-    min: parseInt(process.env.CREDIT_SCORE_MIN, 10) || 0,
-    max: parseInt(process.env.CREDIT_SCORE_MAX, 10) || 1000,
-    default: parseInt(process.env.CREDIT_SCORE_DEFAULT, 10) || 500,
+    min: parseInt(process.env.CREDIT_SCORE_MIN || '0', 10),
+    max: parseInt(process.env.CREDIT_SCORE_MAX || '1000', 10),
+    default: parseInt(process.env.CREDIT_SCORE_DEFAULT || '500', 10),
   },
   
   fraud: {
     enabled: process.env.FRAUD_DETECTION_ENABLED === 'true',
-    riskThreshold: parseFloat(process.env.FRAUD_RISK_THRESHOLD) || 0.7,
+    riskThreshold: parseFloat(process.env.FRAUD_RISK_THRESHOLD || '0.7'),
   },
 });

@@ -3,18 +3,35 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 @ApiTags('payments')
 @Controller('payments')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a payment' })
-  async create(@Body() createPaymentDto: CreatePaymentDto) {
-    return this.paymentService.create(createPaymentDto);
+  async create(
+    @Body() createPaymentDto: CreatePaymentDto,
+    @CurrentUser() user: any,
+  ) {
+    // Get tenant profile ID
+    const tenantProfile = await this.prisma.tenantProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!tenantProfile) {
+      throw new Error('Tenant profile not found');
+    }
+
+    return this.paymentService.create(createPaymentDto, tenantProfile.id);
   }
 
   @Get('lease/:leaseId')

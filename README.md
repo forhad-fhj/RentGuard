@@ -49,35 +49,54 @@ RentGuard is a comprehensive digital rental ecosystem platform that replaces man
 - PostgreSQL 15+
 - Redis 7+
 
-### Local Development
+### ⚡ Fast Setup (Recommended)
+
+**Windows:**
+```powershell
+.\scripts\setup.ps1
+```
+
+**Mac/Linux:**
+```bash
+bash scripts/setup.sh
+```
+
+### 📖 Detailed Setup Guides
+
+- **🚀 [QUICK_START.md](./QUICK_START.md)** - Complete step-by-step guide
+- **✅ [SETUP_CHECKLIST.md](./SETUP_CHECKLIST.md)** - Quick reference checklist  
+- **📋 [WHAT_TO_PROVIDE.md](./WHAT_TO_PROVIDE.md)** - What info to share for help
+
+### Manual Setup
 
 ```bash
-# Clone repository
-git clone <repo-url>
-cd RentGuard
+# 1. Generate secrets
+node scripts/generate-secrets.js
 
-# Copy environment files
+# 2. Copy environment files
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 
-# Start services with Docker Compose
-docker-compose up -d
+# 3. Update backend/.env with generated secrets
 
-# Install dependencies
-cd backend && npm install
-cd ../frontend && npm install
+# 4. Start infrastructure
+docker-compose up -d postgres redis
 
-# Run migrations
+# 5. Setup backend
 cd backend
+npm install
+npm run prisma:generate
 npm run migration:run
-
-# Start backend (dev mode)
 npm run start:dev
 
-# Start frontend (dev mode)
-cd ../frontend
+# 6. Setup frontend (new terminal)
+cd frontend
+npm install
 npm run dev
 ```
+
+**Backend:** http://localhost:3001 | **API Docs:** http://localhost:3001/api/docs  
+**Frontend:** http://localhost:3000
 
 ## 📁 Project Structure
 

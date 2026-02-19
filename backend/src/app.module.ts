@@ -35,8 +35,10 @@ import { NotificationModule } from './modules/notification/notification.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        ttl: config.get('RATE_LIMIT_TTL') || 60,
-        limit: config.get('RATE_LIMIT_MAX') || 100,
+        throttlers: [{
+          ttl: config.get('security.rateLimitTtl') || 60,
+          limit: config.get('security.rateLimitMax') || 100,
+        }],
       }),
     }),
 

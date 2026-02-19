@@ -51,7 +51,7 @@ export class FraudService {
         severity: FraudSeverity.HIGH,
         description: `Multiple accounts detected with same NID: ${verification.nidNumber}`,
         metadata: {
-          duplicateUserIds: duplicateVerifications.map((v) => v.userId),
+          duplicateUserIds: duplicateVerifications.map((v: any) => v.userId),
         },
       });
 

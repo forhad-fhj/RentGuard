@@ -38,12 +38,13 @@ export class DisputeController {
   async addEvidence(
     @Param('id') disputeId: string,
     @CurrentUser() user: any,
-    @Body() body: { fileUrl: string; description?: string },
+    @Body() body: { fileUrl: string; fileType: string; description?: string },
   ) {
     return this.disputeService.addEvidence(
       disputeId,
       body.fileUrl,
       user.id,
+      body.fileType,
       body.description,
     );
   }

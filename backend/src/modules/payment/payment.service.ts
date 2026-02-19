@@ -7,7 +7,7 @@ import { PaymentStatus } from '@prisma/client';
 export class PaymentService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createPaymentDto: CreatePaymentDto) {
+  async create(createPaymentDto: CreatePaymentDto, tenantId: string) {
     const lease = await this.prisma.lease.findUnique({
       where: { id: createPaymentDto.leaseId },
     });
@@ -22,7 +22,10 @@ export class PaymentService {
 
     return this.prisma.payment.create({
       data: {
-        ...createPaymentDto,
+        leaseId: createPaymentDto.leaseId,
+        tenantId,
+        paymentMethod: createPaymentDto.paymentMethod,
+        paymentType: 'RENT',
         amount: lease.monthlyRent,
         dueDate,
         status: PaymentStatus.PENDING,

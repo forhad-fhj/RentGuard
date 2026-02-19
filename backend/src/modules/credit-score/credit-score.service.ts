@@ -48,6 +48,12 @@ export class CreditScoreService {
         riskCategory,
         lastCalculatedAt: new Date(),
       },
+      include: {
+        history: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
     });
 
     // Save history
@@ -60,7 +66,16 @@ export class CreditScoreService {
       },
     });
 
-    return creditScore;
+    // Fetch again with history
+    return this.prisma.creditScore.findUnique({
+      where: { tenantId },
+      include: {
+        history: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
   }
 
   async recalculateCreditScore(tenantId: string) {
