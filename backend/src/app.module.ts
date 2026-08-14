@@ -20,6 +20,8 @@ import { DisputeModule } from './modules/dispute/dispute.module';
 import { FraudModule } from './modules/fraud/fraud.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { RecommendationModule } from './modules/recommendation/recommendation.module';
+import { HealthController } from './common/controllers/health.controller';
 
 @Module({
   imports: [
@@ -69,7 +71,9 @@ import { NotificationModule } from './modules/notification/notification.module';
     FraudModule,
     AdminModule,
     NotificationModule,
+    RecommendationModule,
   ],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_GUARD,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
@@ -50,5 +50,83 @@ export class AdminService {
         isSuspended: false,
       },
     });
+  }
+
+  async getPendingProfileVerifications() {
+    const [tenants, landlords] = await Promise.all([
+      this.prisma.tenantProfile.findMany({
+        where: {
+          profileVerificationStatus: { in: ['SELFIE_ONLY', 'PENDING_NID'] },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              role: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.landlordProfile.findMany({
+        where: {
+          profileVerificationStatus: { in: ['SELFIE_ONLY', 'PENDING_NID'] },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              role: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    return { tenants, landlords, total: tenants.length + landlords.length };
+  }
+
+  async approveProfileVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { tenantProfile: true, landlordProfile: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.tenantProfile) {
+      await this.prisma.tenantProfile.update({
+        where: { userId },
+        data: { profileVerificationStatus: 'VERIFIED' },
+      });
+    }
+
+    if (user.landlordProfile) {
+      await this.prisma.landlordProfile.update({
+        where: { userId },
+        data: {
+          profileVerificationStatus: 'VERIFIED',
+          verificationStatus: 'APPROVED',
+        },
+      });
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isKycVerified: true },
+    });
+
+    return { userId, status: 'VERIFIED' };
   }
 }

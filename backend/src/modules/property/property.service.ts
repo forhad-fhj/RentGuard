@@ -8,6 +8,28 @@ export class PropertyService {
   constructor(private prisma: PrismaService) {}
 
   async create(landlordId: string, createPropertyDto: CreatePropertyDto) {
+    const landlord = await this.prisma.landlordProfile.findUnique({
+      where: { id: landlordId },
+      include: {
+        user: { select: { subscriptionTier: true } },
+      },
+    });
+
+    if (!landlord) {
+      throw new NotFoundException('Landlord profile not found');
+    }
+
+    if (landlord.user.subscriptionTier === 'FREE') {
+      const activeCount = await this.prisma.property.count({
+        where: { landlordId, isAvailable: true },
+      });
+      if (activeCount >= 2) {
+        throw new ForbiddenException(
+          'Free tier is limited to 2 active listings. Upgrade to Premium Landlord for unlimited listings.',
+        );
+      }
+    }
+
     return this.prisma.property.create({
       data: {
         ...createPropertyDto,

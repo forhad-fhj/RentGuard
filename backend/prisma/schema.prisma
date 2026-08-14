@@ -25,6 +25,7 @@ model User {
   isKycVerified  Boolean @default(false)
   isActive       Boolean @default(true)
   isSuspended    Boolean @default(false)
+  subscriptionTier String @default("FREE") // FREE, PREMIUM_TENANT, PREMIUM_LANDLORD
   lastLoginAt    DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -132,6 +133,8 @@ model TenantProfile {
   id                    String   @id @default(uuid())
   userId                String   @unique
   fullName              String
+  selfieUrl             String?   @db.Text // Required before account activation (Stage 1)
+  profileVerificationStatus ProfileVerificationStatus @default(SELFIE_ONLY)
   dateOfBirth           DateTime?
   address               String?   @db.Text
   emergencyContact      String?
@@ -145,6 +148,7 @@ model TenantProfile {
   // Relations
   user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditScore           CreditScore?
+  scoreEvents           ScoreEvent[]
   leases                Lease[]
   reviews               Review[]
   disputes              Dispute[]
@@ -153,6 +157,13 @@ model TenantProfile {
   applications         Application[]
 
   @@map("tenant_profiles")
+}
+
+enum ProfileVerificationStatus {
+  SELFIE_ONLY
+  PENDING_NID
+  VERIFIED
+  REJECTED
 }
 
 model CreditScore {
@@ -211,6 +222,40 @@ model CreditScoreHistory {
   @@map("credit_score_history")
 }
 
+// Immutable, explainable score-affecting events (legal defensibility + tenant right-of-reply)
+model ScoreEvent {
+  id              String   @id @default(uuid())
+  tenantId        String
+  type            ScoreEventType
+  scoreDelta      Int
+  evidenceUrl     String?  @db.Text
+  submittedById   String
+  tenantResponse  String?  @db.Text
+  status          ScoreEventStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+
+  tenant          TenantProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("score_events")
+}
+
+enum ScoreEventType {
+  ON_TIME_PAYMENT
+  LATE_PAYMENT
+  DAMAGE
+  DISPUTE
+  LEASE_COMPLETED
+}
+
+enum ScoreEventStatus {
+  ACTIVE
+  DISPUTED
+  OVERTURNED
+}
+
 // ============================================
 // LANDLORD PROFILE
 // ============================================
@@ -219,6 +264,9 @@ model LandlordProfile {
   id              String   @id @default(uuid())
   userId          String   @unique
   fullName        String
+  selfieUrl       String?   @db.Text // Required before account activation (Stage 1)
+  profileVerificationStatus ProfileVerificationStatus @default(SELFIE_ONLY)
+  ownershipDocUrl String?   @db.Text
   companyName     String?
   licenseNumber   String?
   address         String?   @db.Text

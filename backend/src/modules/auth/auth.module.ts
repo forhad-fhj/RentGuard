@@ -7,12 +7,14 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { PrismaModule } from '../../common/prisma/prisma.module';
+import { S3Module } from '../s3/s3.module';
 import { EncryptionUtil } from '../../common/utils/encryption.util';
 
 @Module({
   imports: [
     ConfigModule,
     PrismaModule,
+    S3Module,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

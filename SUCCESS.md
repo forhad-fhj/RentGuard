@@ -10,7 +10,7 @@
 ## 🚀 Next Steps
 
 ### 1. Test the API
-
+`
 **Important:** The API docs link only works when the **backend is running**.
 
 - **Start the backend first:** In a terminal run `cd backend` then `npm run start:dev`

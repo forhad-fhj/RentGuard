@@ -1,34 +1,58 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import * as crypto from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class S3Service {
   private s3Client: S3Client;
   private bucket: string;
+  private useLocalStorage: boolean;
 
   constructor(private configService: ConfigService) {
     const region = this.configService.get<string>('aws.region') || 'ap-southeast-1';
     const accessKeyId = this.configService.get<string>('aws.accessKeyId');
     const secretAccessKey = this.configService.get<string>('aws.secretAccessKey');
     const endpoint = this.configService.get<string>('aws.s3Endpoint');
-    
+
+    this.useLocalStorage =
+      !accessKeyId ||
+      !secretAccessKey ||
+      accessKeyId === 'changeme' ||
+      secretAccessKey === 'changeme';
+
     const config: any = { region };
-    
-    if (accessKeyId && secretAccessKey) {
+
+    if (!this.useLocalStorage) {
       config.credentials = {
         accessKeyId,
         secretAccessKey,
       };
     }
-    
+
     if (endpoint) {
       config.endpoint = endpoint;
     }
-    
+
     this.s3Client = new S3Client(config);
     this.bucket = this.configService.get<string>('aws.s3Bucket') || 'rentguard-documents';
+  }
+
+  async uploadSelfie(file: Buffer, userId: string): Promise<string> {
+    const filename = `${uuidv4()}.jpg`;
+    const key = `selfies/${userId}/${filename}`;
+
+    if (this.useLocalStorage) {
+      const dir = path.join(process.cwd(), 'uploads', 'selfies', userId);
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(path.join(dir, filename), file);
+      const port = this.configService.get<string>('PORT') || '3001';
+      return `http://localhost:${port}/uploads/selfies/${userId}/${filename}`;
+    }
+
+    return this.uploadFile(file, key);
   }
 
   async uploadFile(

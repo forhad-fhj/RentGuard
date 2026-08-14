@@ -34,4 +34,16 @@ export class AdminController {
   async unsuspendUser(@Param('id') userId: string) {
     return this.adminService.unsuspendUser(userId);
   }
+
+  @Get('verification/pending')
+  @ApiOperation({ summary: 'List profiles pending manual verification review' })
+  async getPendingVerifications() {
+    return this.adminService.getPendingProfileVerifications();
+  }
+
+  @Post('verification/:userId/approve')
+  @ApiOperation({ summary: 'Approve a user profile after manual selfie review' })
+  async approveVerification(@Param('userId') userId: string) {
+    return this.adminService.approveProfileVerification(userId);
+  }
 }

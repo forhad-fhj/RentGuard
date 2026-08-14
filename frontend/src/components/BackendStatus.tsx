@@ -9,8 +9,8 @@ export default function BackendStatus() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        // Try a simple health check endpoint (or any endpoint)
-        await api.get('/auth/login', { timeout: 2000 });
+        // Use health check endpoint
+        await api.get('/health', { timeout: 2000 });
         setIsOnline(true);
       } catch (error: any) {
         if (error.code === 'ERR_NETWORK' || error.message?.includes('Network')) {

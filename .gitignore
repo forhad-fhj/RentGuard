@@ -1,5 +1,8 @@
-# Dependencies
 node_modules/
+
+# Uploads (local dev selfie storage)
+backend/uploads/
+uploads/
 .pnp
 .pnp.js
 
