@@ -15,6 +15,8 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  setToken: (token: string) => void;
+  fetchUser: () => Promise<void>;
   registerInit: (data: {
     email: string;
     phone: string;
@@ -34,6 +36,19 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  setToken: (token: string) => {
+    Cookies.set('accessToken', token, { expires: 7 });
+  },
+  fetchUser: async () => {
+    try {
+      const response = await api.get('/auth/me');
+      set({ user: response.data.data, isAuthenticated: true });
+    } catch (error) {
+      set({ user: null, isAuthenticated: false });
+      Cookies.remove('accessToken');
+      Cookies.remove('refreshToken');
+    }
+  },
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
     const { user, accessToken, refreshToken } = response.data.data;

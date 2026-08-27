@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setToken, fetchUser } = useAuthStore();
@@ -31,5 +31,20 @@ export default function GoogleCallbackPage() {
         <p className="text-gray-600 font-medium">Authenticating with Google...</p>
       </div>
     </div>
+  );
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
+    }>
+      <GoogleCallbackContent />
+    </Suspense>
   );
 }

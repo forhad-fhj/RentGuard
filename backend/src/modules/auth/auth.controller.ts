@@ -92,6 +92,15 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user' })
+  async getMe(@Req() req: any) {
+    return {
+      status: 'success',
+      data: req.user,
+    };
+  }
+
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
