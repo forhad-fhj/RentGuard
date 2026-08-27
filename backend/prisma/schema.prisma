@@ -140,6 +140,7 @@ model TenantProfile {
   profileVerificationStatus ProfileVerificationStatus @default(SELFIE_ONLY)
   dateOfBirth           DateTime?
   address               String?   @db.Text
+  profession            String?   @db.VarChar(255)
   emergencyContact      String?
   emergencyContactPhone String?
   profileImage          String?   @db.Text
@@ -274,6 +275,7 @@ model LandlordProfile {
   companyName     String?
   licenseNumber   String?
   address         String?   @db.Text
+  profession      String?   @db.VarChar(255)
   taxId           String?
   profileImage    String?   @db.Text
   bio             String?   @db.Text

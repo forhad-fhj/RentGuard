@@ -14,8 +14,13 @@ function GoogleCallbackContent() {
     
     if (token) {
       setToken(token);
-      fetchUser().then(() => {
-        router.push('/dashboard');
+      fetchUser().then((user: any) => {
+        // If user has no profile, redirect to onboarding
+        if (user && !user.tenantProfile && !user.landlordProfile) {
+          router.push('/onboarding');
+        } else {
+          router.push('/dashboard');
+        }
       }).catch(() => {
         router.push('/auth/login?error=GoogleAuthFailed');
       });

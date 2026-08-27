@@ -24,6 +24,9 @@ export default function Navbar() {
           <>
             {/* Logged-in nav */}
             <div className="hidden md:flex items-center gap-6">
+              <Link href="/" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                Home
+              </Link>
               <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 Dashboard
               </Link>
@@ -45,22 +48,31 @@ export default function Navbar() {
                   Review Queue
                 </Link>
               )}
-              <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition">
-                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  {user.email.charAt(0).toUpperCase()}
+              
+              <div className="relative group">
+                <button className="flex items-center gap-2 hover:opacity-80 transition focus:outline-none">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    {user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Profile</span>
+                </button>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block border border-gray-100">
+                  <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 font-medium"
+                  >
+                    Sign Out
+                  </button>
                 </div>
-                <span className="text-sm font-medium text-gray-700">Profile</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-red-600 font-medium hover:text-red-700 transition"
-              >
-                Sign Out
-              </button>
+              </div>
             </div>
             {/* Mobile logged-in */}
             <div className="flex md:hidden items-center gap-3">
               <Link href="/dashboard" className="text-sm text-gray-600 px-2 py-1">Dashboard</Link>
+              <Link href="/dashboard/profile" className="text-sm text-gray-600 px-2 py-1">Profile</Link>
               <button
                 onClick={handleLogout}
                 className="text-sm text-red-600 font-medium px-2 py-1"
@@ -85,17 +97,13 @@ export default function Navbar() {
               <Link href="/#trust" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 Trust & Security
               </Link>
-              <Link href="/auth/login" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+              <Link href="/auth/login" className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">
                 Sign In
-              </Link>
-              <Link href="/auth/register" className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">
-                Get Started
               </Link>
             </div>
             <div className="flex md:hidden items-center gap-2">
-              <Link href="/auth/login" className="text-sm text-gray-600 px-3 py-2">Sign In</Link>
-              <Link href="/auth/register" className="bg-primary-600 text-white px-3 py-2 rounded-lg text-sm font-semibold">
-                Get Started
+              <Link href="/auth/login" className="bg-primary-600 text-white px-3 py-2 rounded-lg text-sm font-semibold">
+                Sign In
               </Link>
             </div>
           </>

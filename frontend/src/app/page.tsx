@@ -255,7 +255,7 @@ export default function Home() {
                   href="/auth/register"
                   className="bg-primary-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-lg shadow-primary-600/25 hover:shadow-xl hover:-translate-y-0.5"
                 >
-                  Create Free Account
+                  Get Started
                 </Link>
                 <Link
                   href="/auth/login"

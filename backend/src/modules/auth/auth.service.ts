@@ -329,12 +329,7 @@ export class AuthService {
           providerId,
           isActive: true, // Google verified emails can be considered active
           isEmailVerified: true,
-          role: 'TENANT', // Default role
-          tenantProfile: {
-            create: {
-              fullName: `${firstName} ${lastName}`.trim() || 'Google User',
-            }
-          }
+          role: 'TENANT', // Default role, will be updated during onboarding
         },
       });
     } else if (!user.providerId) {
@@ -350,6 +345,31 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async selectRole(userId: string, role: 'TENANT' | 'LANDLORD', fullName: string, phone?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { tenantProfile: true, landlordProfile: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+    if (user.tenantProfile || user.landlordProfile) {
+      throw new BadRequestException('Role already selected');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        role,
+        phone,
+        ...(role === 'TENANT'
+          ? { tenantProfile: { create: { fullName } } }
+          : { landlordProfile: { create: { fullName } } }),
+      },
+    });
+
+    return updatedUser;
   }
 
   async googleLogin(user: any) {
@@ -384,5 +404,36 @@ export class AuthService {
       return null;
     }
     return user;
+  }
+
+  async updateProfile(userId: string, data: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { tenantProfile: true, landlordProfile: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const updateData: any = {};
+    if (data.phone !== undefined) updateData.phone = data.phone;
+
+    const profileData: any = {};
+    if (data.fullName !== undefined) profileData.fullName = data.fullName;
+    if (data.address !== undefined) profileData.address = data.address;
+    if (data.profession !== undefined) profileData.profession = data.profession;
+
+    if (user.role === 'TENANT' && Object.keys(profileData).length > 0) {
+      updateData.tenantProfile = { update: profileData };
+    } else if (user.role === 'LANDLORD' && Object.keys(profileData).length > 0) {
+      updateData.landlordProfile = { update: profileData };
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      include: { tenantProfile: true, landlordProfile: true },
+    });
+
+    return updatedUser;
   }
 }

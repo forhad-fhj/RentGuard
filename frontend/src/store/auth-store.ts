@@ -42,11 +42,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     try {
       const response = await api.get('/auth/me');
-      set({ user: response.data.data, isAuthenticated: true });
+      const user = response.data.data;
+      set({ user, isAuthenticated: true });
+      return user;
     } catch (error) {
       set({ user: null, isAuthenticated: false });
       Cookies.remove('accessToken');
       Cookies.remove('refreshToken');
+      throw error;
     }
   },
   login: async (email: string, password: string) => {

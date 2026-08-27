@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Put,
   Get,
   Req,
   Res,
@@ -20,6 +21,8 @@ import { AuthService } from './auth.service';
 import { RegisterInitDto } from './dto/register-init.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SelectRoleDto } from './dto/select-role.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { UploadedSelfieFile } from '../../common/types/uploaded-file.type';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -102,6 +105,20 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user' })
   async getMe(@Req() req: any) {
     return req.user;
+  }
+
+  @Post('select-role')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Select role (Tenant/Landlord) for new Google users' })
+  async selectRole(@Req() req: any, @Body() dto: SelectRoleDto) {
+    return this.authService.selectRole(req.user.id, dto.role, dto.fullName, dto.phone);
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update user profile (phone, address, profession, etc)' })
+  async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.id, dto);
   }
 
   @Public()
