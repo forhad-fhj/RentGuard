@@ -104,7 +104,7 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Initiate Google login flow' })
-  async googleAuth(@Req() req) {
+  async googleAuth(@Req() req: any) {
     // Initiates the Google OAuth2 login flow
   }
 
@@ -112,7 +112,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Handle Google login callback' })
-  async googleAuthRedirect(@Req() req, @Res() res) {
+  async googleAuthRedirect(@Req() req: any, @Res() res: any) {
     const { user, tokens } = await this.authService.googleLogin(req.user);
     
     // Redirect to the frontend with the tokens (or set them as cookies)

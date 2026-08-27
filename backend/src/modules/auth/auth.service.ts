@@ -223,6 +223,9 @@ export class AuthService {
       );
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials (please use Google login)');
+    }
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -329,12 +332,7 @@ export class AuthService {
           role: 'TENANT', // Default role
           tenantProfile: {
             create: {
-              firstName,
-              lastName,
-              dateOfBirth: new Date(), // Placeholder, update in profile later
-              nidNumber: 'PENDING_GOOGLE_NID',
-              address: '',
-              employerName: '',
+              fullName: `${firstName} ${lastName}`.trim() || 'Google User',
             }
           }
         },
@@ -359,8 +357,7 @@ export class AuthService {
       throw new UnauthorizedException('No user from google');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const tokens = this.generateTokens(payload);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.createSession(user.id, tokens.accessToken, tokens.refreshToken);
 
     return {
