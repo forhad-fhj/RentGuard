@@ -1,8 +1,10 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth-store';
+import Cookies from 'js-cookie';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -16,6 +18,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
+
+  const fetchUser = useAuthStore((s) => s.fetchUser);
+
+  useEffect(() => {
+    const token = Cookies.get('accessToken');
+    if (token) {
+      fetchUser().catch(() => {
+        // error handling handled by store/api
+      });
+    }
+  }, [fetchUser]);
 
   return (
     <QueryClientProvider client={queryClient}>
