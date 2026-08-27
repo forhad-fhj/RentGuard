@@ -27,6 +27,8 @@ export class PropertyService {
     return this.prisma.property.create({
       data: {
         ...createPropertyDto,
+        availableFrom: new Date(createPropertyDto.availableFrom),
+        availableTo: createPropertyDto.availableTo ? new Date(createPropertyDto.availableTo) : undefined,
         landlordId,
         status: 'DRAFT',
         isAvailable: false,
@@ -235,9 +237,13 @@ export class PropertyService {
       throw new ForbiddenException('Not authorized to update this property');
     }
 
+    const data: any = { ...updatePropertyDto };
+    if (data.availableFrom) data.availableFrom = new Date(data.availableFrom);
+    if (data.availableTo) data.availableTo = new Date(data.availableTo);
+
     return this.prisma.property.update({
       where: { id },
-      data: updatePropertyDto,
+      data,
     });
   }
 

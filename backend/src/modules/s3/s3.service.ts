@@ -65,6 +65,15 @@ export class S3Service {
           ? Buffer.from(fileData, 'base64')
           : fileData;
 
+      if (this.useLocalStorage) {
+        const dir = path.join(process.cwd(), 'uploads', path.dirname(key));
+        const filename = path.basename(key);
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(path.join(dir, filename), buffer);
+        const port = this.configService.get<string>('PORT') || '3001';
+        return `http://localhost:${port}/uploads/${key}`;
+      }
+
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,

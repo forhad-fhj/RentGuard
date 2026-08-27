@@ -33,7 +33,15 @@ export default function VerificationPage() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            await api.post('/identity/verify', { nidNumber, fullName, dateOfBirth });
+            const dummyImage = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+            await api.post('/identity/verify', { 
+                nidNumber, 
+                fullName, 
+                dateOfBirth,
+                nidFrontImage: dummyImage,
+                nidBackImage: dummyImage,
+                selfieImage: dummyImage
+            });
             await fetchStatus();
         } catch { alert('Verification submission failed. Please try again.'); }
         setSubmitting(false);

@@ -65,7 +65,10 @@ export default function CreatePropertyPage() {
                 availableTo: form.availableTo || undefined,
             });
             setSuccess(true);
-        } catch { alert('Failed to create property. Please try again.'); }
+        } catch (error: any) { 
+            console.error(error.response?.data);
+            alert(`Failed: ${Array.isArray(error.response?.data?.message) ? error.response.data.message.join(', ') : (error.response?.data?.message || 'Unknown error')}`); 
+        }
         setLoading(false);
     };
 
