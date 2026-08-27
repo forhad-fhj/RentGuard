@@ -99,10 +99,7 @@ export class AuthController {
   @Get('me')
   @ApiOperation({ summary: 'Get current user' })
   async getMe(@Req() req: any) {
-    return {
-      status: 'success',
-      data: req.user,
-    };
+    return req.user;
   }
 
   @Public()
