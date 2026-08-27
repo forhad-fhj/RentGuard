@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { S3Module } from '../s3/s3.module';
 import { EncryptionUtil } from '../../common/utils/encryption.util';
@@ -28,7 +29,7 @@ import { EncryptionUtil } from '../../common/utils/encryption.util';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, EncryptionUtil],
+  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy, EncryptionUtil],
   exports: [AuthService],
 })
 export class AuthModule {}

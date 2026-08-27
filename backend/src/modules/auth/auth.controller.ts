@@ -1,6 +1,9 @@
 import {
   Controller,
   Post,
+  Get,
+  Req,
+  Res,
   Body,
   UseGuards,
   HttpCode,
@@ -9,6 +12,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -94,5 +98,27 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
+  }
+
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Initiate Google login flow' })
+  async googleAuth(@Req() req) {
+    // Initiates the Google OAuth2 login flow
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Handle Google login callback' })
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    const { user, tokens } = await this.authService.googleLogin(req.user);
+    
+    // Redirect to the frontend with the tokens (or set them as cookies)
+    // For now, we redirect to frontend with access token in query param
+    // In production, consider setting an HttpOnly cookie instead
+    const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}`);
   }
 }

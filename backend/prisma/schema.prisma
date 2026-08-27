@@ -18,8 +18,10 @@ datasource db {
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
-  phone         String   @unique
-  passwordHash  String   @db.VarChar(255)
+  phone         String?  @unique
+  passwordHash  String?  @db.VarChar(255)
+  provider      AuthProvider @default(LOCAL)
+  providerId    String?  @unique
   role          UserRole @default(TENANT)
   isEmailVerified Boolean @default(false)
   isPhoneVerified Boolean @default(false)
@@ -754,4 +756,9 @@ enum NotificationType {
   VERIFICATION_APPROVED
   VERIFICATION_REJECTED
   SYSTEM_ALERT
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
 }

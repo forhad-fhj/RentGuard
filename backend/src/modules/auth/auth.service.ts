@@ -312,6 +312,63 @@ export class AuthService {
     });
   }
 
+  async validateGoogleUser(googleUser: any) {
+    const { provider, providerId, email, firstName, lastName } = googleUser;
+    
+    let user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Create new user since they don't exist
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          provider: 'GOOGLE',
+          providerId,
+          isActive: true, // Google verified emails can be considered active
+          isEmailVerified: true,
+          role: 'TENANT', // Default role
+          tenantProfile: {
+            create: {
+              firstName,
+              lastName,
+              dateOfBirth: new Date(), // Placeholder, update in profile later
+              nidNumber: 'PENDING_GOOGLE_NID',
+              address: '',
+              employerName: '',
+            }
+          }
+        },
+      });
+    } else if (!user.providerId) {
+      // Link existing local account with Google
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          provider: 'GOOGLE',
+          providerId,
+          isEmailVerified: true,
+        },
+      });
+    }
+
+    return user;
+  }
+
+  async googleLogin(user: any) {
+    if (!user) {
+      throw new UnauthorizedException('No user from google');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const tokens = this.generateTokens(payload);
+    await this.createSession(user.id, tokens.accessToken, tokens.refreshToken);
+
+    return {
+      user: { id: user.id, email: user.email, role: user.role },
+      tokens,
+    };
+  }
+
   async validateUser(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
