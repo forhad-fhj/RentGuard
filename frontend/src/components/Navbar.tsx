@@ -2,9 +2,22 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth-store';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Navbar() {
   const user = useAuthStore((s) => s.user);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
 
@@ -46,27 +59,44 @@ export default function Navbar() {
                 </Link>
               )}
               
-              <div className="relative group">
-                <button className="flex items-center gap-2 hover:opacity-80 transition focus:outline-none">
+              <div className="relative" ref={dropdownRef}>
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 hover:opacity-80 transition focus:outline-none"
+                >
                   <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                     {user.email.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-gray-700">Profile</span>
                 </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block border border-gray-100">
-                  <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Dashboard
-                  </Link>
-                  <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    My Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 font-medium"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100">
+                    <Link 
+                      href="/dashboard" 
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link 
+                      href="/dashboard/profile" 
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      My Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             {/* Mobile logged-in */}
