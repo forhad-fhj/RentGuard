@@ -27,9 +27,6 @@ export default function Navbar() {
               <Link href="/" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 Home
               </Link>
-              <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
-                Dashboard
-              </Link>
               <Link href="/properties" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 Browse
               </Link>
@@ -57,6 +54,9 @@ export default function Navbar() {
                   <span className="text-sm font-medium text-gray-700">Profile</span>
                 </button>
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block border border-gray-100">
+                  <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Dashboard
+                  </Link>
                   <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     My Profile
                   </Link>

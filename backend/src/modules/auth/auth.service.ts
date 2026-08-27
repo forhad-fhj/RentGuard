@@ -398,6 +398,8 @@ export class AuthService {
         isActive: true,
         isSuspended: true,
         subscriptionTier: true,
+        tenantProfile: true,
+        landlordProfile: true,
       },
     });
 
