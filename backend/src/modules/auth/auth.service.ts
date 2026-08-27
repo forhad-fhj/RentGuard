@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -347,7 +348,7 @@ export class AuthService {
     return user;
   }
 
-  async selectRole(userId: string, role: 'TENANT' | 'LANDLORD', fullName: string, phone?: string) {
+  async selectRole(userId: string, role: UserRole, fullName: string, phone?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenantProfile: true, landlordProfile: true },
