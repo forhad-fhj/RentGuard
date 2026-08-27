@@ -33,12 +33,11 @@ export class PropertyController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.LANDLORD)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Create a new property listing' })
+  @ApiOperation({ summary: 'Create a new property listing (saved as DRAFT)' })
   async create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
     @Body() createPropertyDto: CreatePropertyDto,
   ) {
-    // Get landlord profile
     const landlordProfile = await this.prisma.landlordProfile.findUnique({
       where: { userId: user.id },
     });
@@ -50,10 +49,87 @@ export class PropertyController {
     return this.propertyService.create(landlordProfile.id, createPropertyDto);
   }
 
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.LANDLORD)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List current landlord properties (all statuses)' })
+  async findMine(@CurrentUser() user: { id: string }) {
+    const landlordProfile = await this.prisma.landlordProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!landlordProfile) {
+      throw new NotFoundException('Landlord profile not found');
+    }
+
+    return this.propertyService.findByLandlord(landlordProfile.id);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get all available properties' })
-  async findAll(@Query() filters: any) {
+  @ApiOperation({ summary: 'Browse active property listings (public, paginated)' })
+  async findAll(@Query() filters: Record<string, string>) {
     return this.propertyService.findAll(filters);
+  }
+
+  @Get(':id/applications')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.LANDLORD)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List applicants for a property (landlord only)' })
+  async getApplications(
+    @Param('id') propertyId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const landlordProfile = await this.prisma.landlordProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!landlordProfile) {
+      throw new NotFoundException('Landlord profile not found');
+    }
+
+    return this.propertyService.getApplications(propertyId, landlordProfile.id);
+  }
+
+  @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.LANDLORD)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Publish a draft listing (requires photo + required fields)' })
+  async publish(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const landlordProfile = await this.prisma.landlordProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!landlordProfile) {
+      throw new NotFoundException('Landlord profile not found');
+    }
+
+    return this.propertyService.publish(id, landlordProfile.id);
+  }
+
+  @Post(':id/archive')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.LANDLORD)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Archive a property listing' })
+  async archive(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const landlordProfile = await this.prisma.landlordProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!landlordProfile) {
+      throw new NotFoundException('Landlord profile not found');
+    }
+
+    return this.propertyService.archive(id, landlordProfile.id);
   }
 
   @Get(':id')
@@ -69,7 +145,7 @@ export class PropertyController {
   @ApiOperation({ summary: 'Update property' })
   async update(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
     @Body() updatePropertyDto: UpdatePropertyDto,
   ) {
     const landlordProfile = await this.prisma.landlordProfile.findUnique({
@@ -87,8 +163,8 @@ export class PropertyController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.LANDLORD)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Delete property' })
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  @ApiOperation({ summary: 'Archive property (soft delete)' })
+  async remove(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     const landlordProfile = await this.prisma.landlordProfile.findUnique({
       where: { userId: user.id },
     });
@@ -107,7 +183,7 @@ export class PropertyController {
   @ApiOperation({ summary: 'Apply for a property' })
   async applyForProperty(
     @Param('id') propertyId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
     @Body() body: { message?: string },
   ) {
     const tenantProfile = await this.prisma.tenantProfile.findUnique({

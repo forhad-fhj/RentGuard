@@ -21,6 +21,7 @@ import { FraudModule } from './modules/fraud/fraud.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { RecommendationModule } from './modules/recommendation/recommendation.module';
+import { ApplicationModule } from './modules/application/application.module';
 import { HealthController } from './common/controllers/health.controller';
 
 @Module({
@@ -72,6 +73,7 @@ import { HealthController } from './common/controllers/health.controller';
     AdminModule,
     NotificationModule,
     RecommendationModule,
+    ApplicationModule,
   ],
   controllers: [HealthController],
   providers: [

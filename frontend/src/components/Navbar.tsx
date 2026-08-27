@@ -27,15 +27,24 @@ export default function Navbar() {
               <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 Dashboard
               </Link>
-              <Link href="/dashboard/properties" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
-                Properties
+              <Link href="/properties" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                Browse
               </Link>
-              <Link href="/dashboard/leases" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
-                Leases
-              </Link>
-              <Link href="/dashboard/payments" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
-                Payments
-              </Link>
+              {user.role === 'LANDLORD' && (
+                <Link href="/landlord/properties" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                  My Listings
+                </Link>
+              )}
+              {user.role === 'TENANT' && (
+                <Link href="/tenant/applications" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                  Applications
+                </Link>
+              )}
+              {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+                <Link href="/admin/review-queue" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                  Review Queue
+                </Link>
+              )}
               <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition">
                 <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                   {user.email.charAt(0).toUpperCase()}
@@ -64,6 +73,9 @@ export default function Navbar() {
           <>
             {/* Logged-out nav */}
             <div className="hidden md:flex items-center gap-8">
+              <Link href="/properties" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
+                Browse Listings
+              </Link>
               <Link href="/#how-it-works" className="text-gray-600 hover:text-primary-600 transition text-sm font-medium">
                 How It Works
               </Link>

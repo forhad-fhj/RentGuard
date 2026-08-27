@@ -161,6 +161,7 @@ model TenantProfile {
 
 enum ProfileVerificationStatus {
   SELFIE_ONLY
+  ADMIN_REVIEWED
   PENDING_NID
   VERIFIED
   REJECTED
@@ -306,7 +307,9 @@ model Property {
   depositAmount     Decimal  @db.Decimal(10, 2)
   availableFrom     DateTime
   availableTo       DateTime?
-  isAvailable       Boolean  @default(true)
+  status            PropertyListingStatus @default(DRAFT)
+  isAvailable       Boolean  @default(false)
+  isPremiumListing  Boolean  @default(false)
   images            String[] @default([]) // S3 URLs
   amenities         String[] @default([])
   rules             String[] @default([])
@@ -319,9 +322,17 @@ model Property {
 
   @@index([landlordId])
   @@index([city])
+  @@index([status])
   @@index([isAvailable])
   @@index([rentAmount])
   @@map("properties")
+}
+
+enum PropertyListingStatus {
+  DRAFT
+  ACTIVE
+  RENTED
+  ARCHIVED
 }
 
 enum PropertyType {
@@ -359,6 +370,36 @@ enum ApplicationStatus {
   APPROVED
   REJECTED
   WITHDRAWN
+}
+
+// Admin review queue — manual trust checks on selfies / ownership docs
+model ReviewFlag {
+  id           String   @id @default(uuid())
+  targetUserId String
+  reason       ReviewFlagReason
+  status       ReviewFlagStatus @default(OPEN)
+  reviewedById String?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([targetUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("review_flags")
+}
+
+enum ReviewFlagReason {
+  SELFIE_QUALITY
+  SUSPECTED_FAKE
+  OWNERSHIP_DOC
+  USER_REPORTED
+}
+
+enum ReviewFlagStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 // ============================================

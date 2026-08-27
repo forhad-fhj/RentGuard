@@ -125,7 +125,7 @@ export default function AdminPage() {
         { label: 'Total Users', value: stats.totalUsers, icon: '👥' },
         { label: 'Properties', value: stats.totalProperties, icon: '🏠' },
         { label: 'Active Leases', value: stats.activeLeases, icon: '📋' },
-        { label: 'Pending KYC', value: stats.pendingVerifications, icon: '🪪' },
+        { label: 'Pending Reviews', value: stats.pendingVerifications, icon: '🔍' },
         { label: 'Payments', value: stats.totalPayments, icon: '💳' },
         { label: 'Open Disputes', value: stats.openDisputes, icon: '⚖️' },
       ]
@@ -144,9 +144,12 @@ export default function AdminPage() {
           ← Dashboard
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2 mb-2">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 mb-8">
-          Manual verification review — RentGuard is not a government verification service.
+        <p className="text-sm text-gray-500 mb-4">
+          Manual selfie review — outcomes are &ldquo;Reviewed by RentGuard team&rdquo;, not government ID verification.
         </p>
+        <Link href="/admin/review-queue" className="inline-block text-sm text-primary-600 font-medium hover:underline mb-8">
+          Open review queue →
+        </Link>
 
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading...</div>
@@ -202,7 +205,7 @@ export default function AdminPage() {
                         onClick={() => approveUser(p.user.id)}
                         className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                       >
-                        Approve
+                        Mark reviewed
                       </button>
                     </li>
                   ))}

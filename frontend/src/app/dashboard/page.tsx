@@ -25,21 +25,20 @@ export default function DashboardPage() {
   }
 
   const tenantActions = [
-    { icon: '🏠', title: 'Browse Properties', desc: 'Find your next home', href: '/dashboard/properties' },
+    { icon: '🏠', title: 'Browse Properties', desc: 'Find your next home', href: '/properties' },
+    { icon: '📝', title: 'My Applications', desc: 'Track application status', href: '/tenant/applications' },
     { icon: '📊', title: 'Credit Score', desc: 'View your tenant score', href: '/dashboard/credit-score' },
     { icon: '📋', title: 'My Leases', desc: 'Manage rental agreements', href: '/dashboard/leases' },
-    { icon: '🪪', title: 'Verify Identity', desc: 'NID verification for trust', href: '/dashboard/verification' },
     { icon: '💳', title: 'Payments', desc: 'View payment history', href: '/dashboard/payments' },
     { icon: '⚖️', title: 'Disputes', desc: 'Raise or view disputes', href: '/dashboard/disputes' },
   ];
 
   const landlordActions = [
-    { icon: '🏠', title: 'My Properties', desc: 'Manage your listings', href: '/dashboard/properties' },
-    { icon: '➕', title: 'List Property', desc: 'Add a new listing', href: '/dashboard/properties/create' },
+    { icon: '🏠', title: 'My Listings', desc: 'Manage draft & active listings', href: '/landlord/properties' },
+    { icon: '➕', title: 'List Property', desc: 'Create a new draft listing', href: '/dashboard/properties/create' },
     { icon: '📋', title: 'Lease Agreements', desc: 'View and manage leases', href: '/dashboard/leases' },
     { icon: '💳', title: 'Payments', desc: 'Track rent payments', href: '/dashboard/payments' },
     { icon: '⚖️', title: 'Disputes', desc: 'Resolve tenant issues', href: '/dashboard/disputes' },
-    { icon: '🪪', title: 'Verify Identity', desc: 'Complete your KYC', href: '/dashboard/verification' },
   ];
 
   const actions = user.role === 'TENANT' ? tenantActions : landlordActions;
@@ -98,8 +97,8 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Pending</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">KYC Status</span>
-                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Pending</span>
+                    <span className="text-sm text-gray-600">Profile review</span>
+                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Selfie on file</span>
                   </div>
                 </div>
               </div>

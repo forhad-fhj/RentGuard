@@ -171,6 +171,13 @@ export class AuthService {
       },
     });
 
+    await this.prisma.reviewFlag.create({
+      data: {
+        targetUserId: user.id,
+        reason: 'SELFIE_QUALITY',
+      },
+    });
+
     const tokens = await this.generateTokens(activated.id, activated.email, activated.role);
 
     return {

@@ -25,6 +25,7 @@ export default function CreatePropertyPage() {
         bathrooms: '',
         squareFeet: '',
         amenities: '',
+        imageUrl: '',
         availableFrom: '',
         availableTo: '',
     });
@@ -59,6 +60,7 @@ export default function CreatePropertyPage() {
                 bathrooms: Number(form.bathrooms) || 0,
                 squareFeet: Number(form.squareFeet) || 0,
                 amenities: form.amenities.split(',').map(a => a.trim()).filter(Boolean),
+                images: form.imageUrl ? [form.imageUrl.trim()] : [],
                 availableFrom: form.availableFrom,
                 availableTo: form.availableTo || undefined,
             });
@@ -74,9 +76,9 @@ export default function CreatePropertyPage() {
             <div className="min-h-screen flex flex-col bg-gray-50"><Navbar />
                 <div className="flex-1 flex items-center justify-center flex-col gap-3">
                     <span className="text-5xl">🎉</span>
-                    <h2 className="text-xl font-bold text-gray-900">Property Listed!</h2>
-                    <p className="text-gray-500 text-sm">Your property is now visible to tenants</p>
-                    <Link href="/dashboard/properties" className="text-primary-600 font-medium hover:underline mt-2">View Properties →</Link>
+                    <h2 className="text-xl font-bold text-gray-900">Draft saved!</h2>
+                    <p className="text-gray-500 text-sm">Add a photo URL if needed, then publish from My Listings.</p>
+                    <Link href="/landlord/properties" className="text-primary-600 font-medium hover:underline mt-2">My Listings →</Link>
                 </div>
                 <Footer />
             </div>
@@ -163,6 +165,11 @@ export default function CreatePropertyPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
                             <input type="text" value={form.amenities} onChange={(e) => update('amenities', e.target.value)} placeholder="WiFi, Parking, Generator, Lift (comma separated)" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500" />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Photo URL (required to publish)</label>
+                            <input type="url" value={form.imageUrl} onChange={(e) => update('imageUrl', e.target.value)} placeholder="https://..." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500" />
+                            <p className="text-xs text-gray-400 mt-1">Saved as draft until you publish from My Listings.</p>
+                        </div>
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Available From *</label>
@@ -187,7 +194,7 @@ export default function CreatePropertyPage() {
                     </div>
 
                     <button type="submit" disabled={loading} className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition disabled:opacity-50">
-                        {loading ? 'Creating...' : 'List Property'}
+                        {loading ? 'Creating...' : 'Save as draft'}
                     </button>
                 </form>
             </main>
