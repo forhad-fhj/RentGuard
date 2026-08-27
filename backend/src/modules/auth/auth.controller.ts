@@ -15,6 +15,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { RegisterInitDto } from './dto/register-init.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,7 +26,10 @@ import { UploadedSelfieFile } from '../../common/types/uploaded-file.type';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Public()
   @Post('register-init')
@@ -127,7 +131,9 @@ export class AuthController {
     // Redirect to the frontend with the tokens (or set them as cookies)
     // For now, we redirect to frontend with access token in query param
     // In production, consider setting an HttpOnly cookie instead
-    const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('CORS_ORIGIN') || process.env.CORS_ORIGIN || 'http://localhost:3000';
+    console.log('CORS_ORIGIN from ConfigService:', this.configService.get<string>('CORS_ORIGIN'));
+    console.log('Redirecting to frontendUrl:', frontendUrl);
     res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}`);
   }
 }
