@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/auth-store';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
